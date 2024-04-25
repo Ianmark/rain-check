@@ -1,0 +1,101 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Weather app</title>
+</head>
+<body>
+    {% if messages %}
+        <div class="error">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="main">
+        <button onclick="getLocation()">Get local weather</button>
+        <form action="" method="post">
+            {% csrf_token %}
+            <label for="city1">Enter city name</label>
+            <input id="city1" type="text" name="city1">
+            <input id="btn" type="submit" value="Search weather">
+        </form>
+
+        <div class="comparison-container">
+            {% if weather_data1 %}
+                <div class="city-container">
+                    {% include 'weather_app/city_weather.html' with weather_data=weather_data1 daily_forecasts=daily_forecasts1 %}
+                </div>
+            {% endif %}
+            {% if weather_data2 %}
+                <div class="city-container">
+                    {% include 'weather_app/city_weather.html' with weather_data=weather_data2 daily_forecasts=daily_forecasts2 %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Get location data using browser
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else { 
+                console.log("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPosition(position) {
+            const location_data = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+            postLocation(location_data)
+            console.log(location_data)
+        }
+
+        const csrf_token = document.forms[0].querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        //  Send location data to Django server
+        async function postLocation(data) {
+            try{
+                const response = await fetch("{% url 'locate' %}", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-CSRFToken": csrf_token,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                location.replace("{% url 'index' %}")
+            } catch (error) {
+                console.log("Error:", error)
+            }
+        }
+
+        // Handle error
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log("User denied the request for Geolocation.")
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log("Location information is unavailable.")
+                    break;
+                case error.TIMEOUT:
+                    console.log("The request to get user location timed out.")
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.log("An unknown error occurred.")
+                    break;
+            }
+        }
+    </script> 
+</body>
+</html>
