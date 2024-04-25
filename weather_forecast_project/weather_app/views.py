@@ -42,8 +42,9 @@ def index(request):
                 'daily_forecasts2': daily_forecasts2
             }
         return render(request, "weather_app/base.html", context) 
-    except:
+    except Exception as error:
         messages.error(request, "An error occured.")
+        print("Error:", type(error).__name__, "error", "-", error)
 
         return render(request, "weather_app/base.html")
    
@@ -51,11 +52,11 @@ def locate(request):
     """ Handle location data coming from Javascript frontend """
 
     if request.method == "POST":
-        x = json.loads(request.body)
         global LAT, LON
+        
         LAT = x['latitude']
         LON = x['longitude']
-        print(f"{LAT} || {LON}")
+        x = json.loads(request.body)
         
         return JsonResponse({'message':'success'})
     else:
@@ -69,19 +70,12 @@ def fetch_weather_and_forecast(city, current_weather_url, forecast_weather_url, 
         if LAT == None or LON == None: 
             # Get latitude and longitude for user form IP address location
             lat, lon = get_location_from_ip_address(request)
-            print("1st")
-            
         else:
             # Get latitude and longitude gotten from browser
             lat, lon = LAT, LON
-            print('second') 
-            print(f"{lat} || {lon}")
     else:
         # Get  latitude and longitude for city entered
         lat, lon = get_lat_and_lon_from_city(city, API_KEY)
-
-    print(get_location_from_ip_address(request))
-    print(current_weather_url.format(lat, lon, API_KEY))
 
     # Get weather data JSON from API and parse as dictionary
     response = requests.get(current_weather_url.format(lat, lon, API_KEY)).json()

@@ -11,7 +11,6 @@ API_KEY = os.getenv('GEOLOCATE_API_KEY')
 api_url = 'https://ipgeolocation.abstractapi.com/v1/?api_key=' + API_KEY
 
 def get_location_from_ip_address(request):
-
     # Get user IP address
     remote_addr = request.META.get('HTTP_X_FORWARDED_FOR')
     if remote_addr:
